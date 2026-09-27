@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>프롬프트 아카이브</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f7f7f5;
+    --text: #37352f;
+    --text-2: #787774;
+    --border: #e9e9e7;
+    --hover: #f1f1ef;
+    --accent: #2383e2;
+    --danger: #d44c47;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191919;
+      --bg-soft: #222222;
+      --text: #e3e3e1;
+      --text-2: #9b9a97;
+      --border: #2f2f2f;
+      --hover: #2a2a2a;
+      --accent: #529cca;
+      --danger: #e06c67;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+  /* 헤더 */
+  header { border-bottom: 1px solid var(--border); }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  .site-name { font-weight: 700; font-size: 16px; }
+  .badge { font-size: 12px; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 2px 10px; }
+
+  main { padding: 32px 0 64px; min-height: calc(100vh - 56px - 64px); }
+
+  /* 버튼 */
+  .btn {
+    border: 1px solid var(--border); background: var(--bg); border-radius: 6px;
+    padding: 6px 12px; font-size: 14px; cursor: pointer;
+  }
+  .btn:hover { background: var(--hover); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.05); }
+  .btn.danger { color: var(--danger); }
+  .btn:disabled { opacity: .5; cursor: default; }
+
+  /* 목록 */
+  .list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .count { color: var(--text-2); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px 16px; }
+  .card { display: block; border-radius: 8px; }
+  .card .thumb {
+    aspect-ratio: 3 / 2; background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card:hover .thumb { border-color: var(--text-2); }
+  .card-title { margin-top: 8px; font-weight: 600; font-size: 14px; line-height: 1.4; }
+  .empty { color: var(--text-2); padding: 48px 0; text-align: center; }
+
+  /* 상세 */
+  .back { display: inline-block; color: var(--text-2); font-size: 14px; margin-bottom: 16px; padding: 2px 6px; margin-left: -6px; border-radius: 4px; }
+  .back:hover { background: var(--hover); color: var(--text); }
+  .detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+  .detail-head h1 { font-size: 28px; line-height: 1.3; margin: 0; }
+  .detail-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .detail { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; }
+  .detail-img { position: sticky; top: 24px; }
+  .detail-img img { width: 100%; display: block; border-radius: 8px; border: 1px solid var(--border); }
+  .detail-img .noimg { aspect-ratio: 4 / 5; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; display: grid; place-items: center; color: var(--text-2); font-size: 14px; }
+  .detail-body { display: flex; flex-direction: column; gap: 16px; }
+
+  .box { border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px 12px; }
+  .box-label { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+  .box-text { white-space: pre-wrap; word-break: break-word; font-size: 15px; }
+  .box-text.muted { color: var(--text-2); }
+  .box-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .copy-btn { min-width: 76px; }
+  .copy-btn.done { color: var(--accent); border-color: var(--accent); }
+  .box.memo { padding-bottom: 16px; }
+
+  @media (max-width: 760px) {
+    .detail { grid-template-columns: 1fr; gap: 20px; }
+    .detail-img { position: static; }
+    .detail-head h1 { font-size: 22px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
+  }
+
+  footer { height: 64px; display: flex; align-items: center; justify-content: center; }
+  .link-btn { background: none; border: 0; color: var(--text-2); font-size: 13px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .link-btn:hover { background: var(--hover); color: var(--text); }
+
+  /* 안내 */
+  .notice { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; color: var(--text-2); margin-bottom: 20px; }
+
+  /* 모달 */
+  .overlay { position: fixed; inset: 0; background: rgba(15, 15, 15, .45); display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; overflow-y: auto; z-index: 50; }
+  .modal { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; width: 100%; max-width: 640px; padding: 24px; }
+  .modal h2 { margin: 0 0 16px; font-size: 18px; }
+  .modal p { margin: 0 0 16px; color: var(--text-2); font-size: 14px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+  .field input[type=text], .field input[type=password], .field textarea {
+    width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text);
+    border-radius: 6px; padding: 8px 10px; font: inherit; font-size: 14px;
+  }
+  .field textarea { min-height: 110px; resize: vertical; line-height: 1.6; }
+  .img-pick { display: flex; gap: 14px; align-items: center; }
+  .img-pick .pv { width: 120px; aspect-ratio: 3 / 2; border-radius: 6px; background: var(--bg-soft); border: 1px solid var(--border); overflow: hidden; flex-shrink: 0; }
+  .img-pick .pv img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .error { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 1em; }
+
+  /* 토스트 */
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 6px; font-size: 14px; z-index: 60; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="site-name" href="#/">프롬프트 아카이브</a>
+    <span id="modeBadge"></span>
+  </div>
+</header>
+<main><div class="wrap" id="app"></div></main>
+<footer><button class="link-btn" id="adminBtn">관리자</button></footer>
+
+<script>
+/* ============================================================
+   설정: github.io 주소에서 열면 자동으로 저장소를 알아냅니다.
+   커스텀 도메인을 쓰거나 자동 인식이 안 되면 아래 값을 직접 채우세요.
+   ============================================================ */
+const CONFIG = {
+  owner: "",          // 예: "myname"
+  repo: "",           // 예: "prompt-archive"
+  branch: "main",
+  dataPath: "data.json",
+  imageDir: "images",
+};
+
+/* data.json이 없을 때 보여줄 샘플 */
+function placeholder(h1, h2, label) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h1},45%,82%)"/><stop offset="1" stop-color="hsl(${h2},40%,62%)"/></linearGradient></defs><rect width="1200" height="800" fill="url(#g)"/><text x="600" y="415" font-family="sans-serif" font-size="44" fill="rgba(255,255,255,.9)" text-anchor="middle">${label}</text></svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+const SAMPLE = [
+  {
+    id: "sample1",
+    title: "봄날 카페 창가",
+    image: placeholder(30, 350, "Sample 1"),
+    prompt: "1girl, sitting by the window, cafe interior, soft morning light, warm tone, shallow depth of field, looking outside, gentle smile, highly detailed, 8k",
+    outfit: "1girl, sitting by the window, cafe interior, soft morning light, warm tone, shallow depth of field, looking outside, gentle smile,\ncream knit cardigan, white blouse, light blue denim skirt, thin gold necklace,\nhighly detailed, 8k",
+    memo: "비율 4:5에서 제일 잘 나옴.\n빛 방향 바꾸고 싶으면 'backlight'로 교체."
+  },
+  {
+    id: "sample2",
+    title: "비 오는 도시의 밤",
+    image: placeholder(220, 260, "Sample 2"),
+    prompt: "1girl, standing on a city street at night, rain, neon reflections on wet asphalt, holding a transparent umbrella, cinematic lighting, bokeh",
+    outfit: "1girl, standing on a city street at night, rain, neon reflections on wet asphalt, holding a transparent umbrella,\nblack long trench coat, turtleneck, ankle boots,\ncinematic lighting, bokeh",
+    memo: "네온 색이 너무 강하면 'muted neon' 추가."
+  },
+  {
+    id: "sample3",
+    title: "여름 해변 산책",
+    image: placeholder(180, 45, "Sample 3"),
+    prompt: "1girl, walking along the beach, golden hour, wind blowing hair, ocean waves, film photography style, natural colors",
+    outfit: "1girl, walking along the beach, golden hour, wind blowing hair, ocean waves,\nwhite linen sundress, straw hat, barefoot,\nfilm photography style, natural colors",
+    memo: ""
+  }
+];
+
+/* ---------- 상태 ---------- */
+let items = [];
+let dataSha = null;
+let dataExists = true;
+let isAdmin = false;
+let token = "";
+let repo = null;
+const previews = {}; // 방금 올린 이미지 (배포 전 미리보기용)
+
+const $app = document.getElementById("app");
+
+/* ---------- 유틸 ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ""; } catch { return ""; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  del(k) { try { localStorage.removeItem(k); } catch {} },
+};
+function b64encodeUtf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64decodeUtf8(b64) {
+  const bin = atob(b64.replace(/\s/g, ""));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+function imgSrc(path) {
+  if (!path) return "";
+  if (previews[path]) return previews[path];
+  return path;
+}
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+function detectRepo() {
+  if (CONFIG.owner && CONFIG.repo) return { owner: CONFIG.owner, repo: CONFIG.repo };
+  const h = location.hostname;
+  if (h.endsWith(".github.io")) {
+    const owner = h.split(".")[0];
+    const seg = location.pathname.split("/").filter(Boolean)[0];
+    const name = seg && !seg.includes(".") ? seg : h;
+    return { owner, repo: name };
+  }
+  return null;
+}
+
+/* ---------- GitHub API ---------- */
+async function gh(path, opts = {}) {
+  const res = await fetch("https://api.github.com" + path, {
+    ...opts,
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: "Bearer " + token,
+      ...(opts.body ? { "Content-Type": "application/json" } : {}),
+    },
+  });
+  if (!res.ok) {
+    const err = new Error("GitHub 요청 실패 (" + res.status + ")");
+    err.status = res.status;
+    throw err;
+  }
+  return res.status === 204 ? null : res.json();
+}
+const repoPath = p => `/repos/${repo.owner}/${repo.repo}/contents/${p}`;
+
+async function verifyToken() {
+  const info = await gh(`/repos/${repo.owner}/${repo.repo}`);
+  if (!info.permissions || !info.permissions.push) throw new Error("이 토큰에는 저장소 쓰기 권한이 없습니다.");
+}
+
+async function loadData() {
+  if (isAdmin) {
+    try {
+      const r = await gh(repoPath(CONFIG.dataPath) + "?ref=" + CONFIG.branch + "&t=" + Date.now());
+      dataSha = r.sha;
+      let text = r.content ? b64decodeUtf8(r.content) : await (await fetch(r.download_url)).text();
+      items = JSON.parse(text).items || [];
+      dataExists = true;
+      return;
+    } catch (e) {
+      if (e.status === 404) { items = SAMPLE.map(x => ({ ...x })); dataSha = null; dataExists = false; return; }
+      throw e;
+    }
+  }
+  try {
+    const res = await fetch(CONFIG.dataPath + "?t=" + Date.now());
+    if (!res.ok) throw 0;
+    items = (await res.json()).items || [];
+    dataExists = true;
+  } catch {
+    items = SAMPLE.map(x => ({ ...x }));
+    dataExists = false;
+  }
+}
+
+async function saveData(message) {
+  const body = {
+    message,
+    branch: CONFIG.branch,
+    content: b64encodeUtf8(JSON.stringify({ items }, null, 2)),
+  };
+  if (dataSha) body.sha = dataSha;
+  const r = await gh(repoPath(CONFIG.dataPath), { method: "PUT", body: JSON.stringify(body) });
+  dataSha = r.content.sha;
+  dataExists = true;
+}
+
+async function uploadImage(dataUrl, id) {
+  const path = `${CONFIG.imageDir}/${id}-${Date.now()}.jpg`;
+  await gh(repoPath(path), {
+    method: "PUT",
+    body: JSON.stringify({ message: "이미지 추가: " + path, branch: CONFIG.branch, content: dataUrl.split(",")[1] }),
+  });
+  previews[path] = dataUrl;
+  return path;
+}
+
+function compressImage(file, max = 1600, quality = 0.85) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.round(img.width * s), h = Math.round(img.height * s);
+      const c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => reject(new Error("이미지를 읽을 수 없습니다."));
+    img.src = url;
+  });
+}
+
+/* ---------- 화면 ---------- */
+function render() {
+  document.getElementById("modeBadge").innerHTML = isAdmin ? '<span class="badge">편집 모드</span>' : "";
+  document.getElementById("adminBtn").textContent = isAdmin ? "편집 모드 끄기" : "관리자";
+  const m = location.hash.match(/^#\/item\/(.+)$/);
+  if (m) renderDetail(decodeURIComponent(m[1]));
+  else renderList();
+}
+
+function renderList() {
+  const notice = isAdmin && !dataExists
+    ? '<div class="notice">저장소에 data.json이 아직 없어서 샘플을 보여주고 있어요. 항목을 추가하거나 수정하면 그때 data.json이 만들어집니다. 샘플은 삭제해도 됩니다.</div>'
+    : "";
+  $app.innerHTML = `
+    ${notice}
+    <div class="list-head">
+      <span class="count">전체 ${items.length}개</span>
+      ${isAdmin ? '<button class="btn primary" data-act="add">새 항목 추가</button>' : ""}
+    </div>
+    ${items.length ? `<div class="grid">${items.map(it => `
+      <a class="card" href="#/item/${encodeURIComponent(it.id)}">
+        <div class="thumb">${it.image ? `<img src="${esc(imgSrc(it.image))}" alt="" loading="lazy">` : ""}</div>
+        <div class="card-title">${esc(it.title || "제목 없음")}</div>
+      </a>`).join("")}</div>`
+      : `<div class="empty">${isAdmin ? "새 항목 추가를 눌러 첫 항목을 만들어 보세요." : "아직 등록된 항목이 없습니다."}</div>`}
+  `;
+}
+
+function box(label, value, copyKey) {
+  const has = value && value.trim();
+  return `
+    <section class="box${copyKey ? "" : " memo"}">
+      <div class="box-label">${label}</div>
+      <div class="box-text${has ? "" : " muted"}">${has ? esc(value) : "비어 있음"}</div>
+      ${copyKey ? `<div class="box-foot"><button class="btn copy-btn" data-copy="${copyKey}" ${has ? "" : "disabled"}>복사</button></div>` : ""}
+    </section>`;
+}
+
+function renderDetail(id) {
+  const it = items.find(x => x.id === id);
+  if (!it) {
+    $app.innerHTML = `<a class="back" href="#/">← 목록으로</a><div class="empty">항목을 찾을 수 없습니다.</div>`;
+    return;
+  }
+  $app.innerHTML = `
+    <a class="back" href="#/">← 목록으로</a>
+    <div class="detail-head">
+      <h1>${esc(it.title || "제목 없음")}</h1>
+      ${isAdmin ? `<div class="detail-actions">
+        <button class="btn" data-act="edit">수정</button>
+        <button class="btn danger" data-act="delete">삭제</button>
+      </div>` : ""}
+    </div>
+    <div class="detail">
+      <div class="detail-img">
+        ${it.image ? `<img src="${esc(imgSrc(it.image))}" alt="${esc(it.title)}">` : '<div class="noimg">이미지 없음</div>'}
+      </div>
+      <div class="detail-body">
+        ${box("프롬프트", it.prompt, "prompt")}
+        ${box("의상 포함 프롬프트", it.outfit, "outfit")}
+        ${box("기타 메모", it.memo, null)}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- 복사 ---------- */
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+}
+
+/* ---------- 모달 ---------- */
+function openModal(html) {
+  closeModal();
+  const ov = document.createElement("div");
+  ov.className = "overlay";
+  ov.id = "overlay";
+  ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true">${html}</div>`;
+  ov.addEventListener("mousedown", e => { if (e.target === ov) closeModal(); });
+  document.body.appendChild(ov);
+  const first = ov.querySelector("input, textarea");
+  if (first) first.focus();
+  return ov;
+}
+function closeModal() {
+  const ov = document.getElementById("overlay");
+  if (ov) ov.remove();
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+function openLogin() {
+  if (!repo) {
+    openModal(`
+      <h2>저장소 정보가 필요해요</h2>
+      <p>github.io 주소가 아니라서 저장소를 자동으로 찾지 못했습니다. index.html 위쪽 CONFIG에 owner와 repo를 입력해 주세요.</p>
+      <div class="modal-foot"><button class="btn" data-close>닫기</button></div>`);
+    return;
+  }
+  const ov = openModal(`
+    <h2>편집 모드 켜기</h2>
+    <p>${esc(repo.owner)}/${esc(repo.repo)} 저장소에 쓰기 권한이 있는 GitHub 토큰을 입력하세요. 토큰은 이 브라우저에만 저장됩니다.</p>
+    <div class="field">
+      <label for="tk">GitHub 토큰</label>
+      <input type="password" id="tk" autocomplete="off" placeholder="github_pat_...">
+    </div>
+    <div class="error" id="loginErr"></div>
+    <div class="modal-foot">
+      <button class="btn" data-close>취소</button>
+      <button class="btn primary" id="loginGo">편집 모드 켜기</button>
+    </div>`);
+  const go = async () => {
+    const btn = ov.querySelector("#loginGo");
+    const err = ov.querySelector("#loginErr");
+    token = ov.querySelector("#tk").value.trim();
+    if (!token) { err.textContent = "토큰을 입력하세요."; return; }
+    btn.disabled = true; btn.textContent = "확인 중…"; err.textContent = "";
+    try {
+      await verifyToken();
+      store.set("gh_token", token);
+      isAdmin = true;
+      await loadData();
+      closeModal();
+      render();
+      toast("편집 모드를 켰어요");
+    } catch (e) {
+      token = "";
+      err.textContent = e.status === 401 ? "토큰이 올바르지 않습니다." : e.status === 404 ? "저장소를 찾을 수 없거나 토큰에 이 저장소 접근 권한이 없습니다." : e.message;
+      btn.disabled = false; btn.textContent = "편집 모드 켜기";
+    }
+  };
+  ov.querySelector("#loginGo").onclick = go;
+  ov.querySelector("#tk").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+}
+
+function openEditor(existing) {
+  const it = existing || { id: Date.now().toString(36), title: "", image: "", prompt: "", outfit: "", memo: "" };
+  let pendingImage = null;
+  const ov = openModal(`
+    <h2>${existing ? "항목 수정" : "새 항목 추가"}</h2>
+    <div class="field">
+      <label for="f-title">제목</label>
+      <input type="text" id="f-title" value="${esc(it.title)}">
+    </div>
+    <div class="field">
+      <label for="f-img">이미지</label>
+      <div class="img-pick">
+        <div class="pv" id="f-pv">${it.image ? `<img src="${esc(imgSrc(it.image))}" alt="">` : ""}</div>
+        <input type="file" id="f-img" accept="image/*">
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-prompt">프롬프트</label>
+      <textarea id="f-prompt">${esc(it.prompt)}</textarea>
+    </div>
+    <div class="field">
+      <label for="f-outfit">의상 포함 프롬프트</label>
+      <textarea id="f-outfit">${esc(it.outfit)}</textarea>
+    </div>
+    <div class="field">
+      <label for="f-memo">기타 메모</label>
+      <textarea id="f-memo">${esc(it.memo)}</textarea>
+    </div>
+    <div class="error" id="editErr"></div>
+    <div class="modal-foot">
+      <button class="btn" data-close>취소</button>
+      <button class="btn primary" id="saveBtn">저장</button>
+    </div>`);
+
+  ov.querySelector("#f-img").addEventListener("change", async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      pendingImage = await compressImage(file);
+      ov.querySelector("#f-pv").innerHTML = `<img src="${pendingImage}" alt="">`;
+    } catch (er) { ov.querySelector("#editErr").textContent = er.message; }
+  });
+
+  ov.querySelector("#saveBtn").onclick = async () => {
+    const btn = ov.querySelector("#saveBtn");
+    const err = ov.querySelector("#editErr");
+    const updated = {
+      ...it,
+      title: ov.querySelector("#f-title").value.trim(),
+      prompt: ov.querySelector("#f-prompt").value,
+      outfit: ov.querySelector("#f-outfit").value,
+      memo: ov.querySelector("#f-memo").value,
+    };
+    if (!updated.title) { err.textContent = "제목을 입력하세요."; return; }
+    btn.disabled = true; btn.textContent = "저장 중…"; err.textContent = "";
+    const backup = items.slice();
+    try {
+      if (pendingImage) updated.image = await uploadImage(pendingImage, updated.id);
+      if (existing) items = items.map(x => x.id === updated.id ? updated : x);
+      else items = [updated, ...items];
+      await saveData((existing ? "수정: " : "추가: ") + updated.title);
+      closeModal();
+      location.hash = "#/item/" + encodeURIComponent(updated.id);
+      render();
+      toast("저장했어요");
+    } catch (e) {
+      items = backup;
+      err.textContent = e.status === 409 || e.status === 422
+        ? "다른 곳에서 먼저 수정된 내용이 있어요. 새로고침한 뒤 다시 저장해 주세요."
+        : "저장하지 못했습니다: " + e.message;
+      btn.disabled = false; btn.textContent = "저장";
+    }
+  };
+}
+
+async function deleteItem(id) {
+  const it = items.find(x => x.id === id);
+  if (!it || !confirm(`"${it.title}" 항목을 삭제할까요?`)) return;
+  const backup = items.slice();
+  items = items.filter(x => x.id !== id);
+  try {
+    await saveData("삭제: " + it.title);
+    location.hash = "#/";
+    render();
+    toast("삭제했어요");
+  } catch (e) {
+    items = backup;
+    alert("삭제하지 못했습니다: " + e.message);
+  }
+}
+
+/* ---------- 이벤트 ---------- */
+document.addEventListener("click", async e => {
+  const c = e.target.closest("[data-close]");
+  if (c) { closeModal(); return; }
+
+  const copyBtn = e.target.closest("[data-copy]");
+  if (copyBtn) {
+    const id = decodeURIComponent((location.hash.match(/^#\/item\/(.+)$/) || [])[1] || "");
+    const it = items.find(x => x.id === id);
+    if (!it) return;
+    await copyText(it[copyBtn.dataset.copy] || "");
+    copyBtn.textContent = "복사됨";
+    copyBtn.classList.add("done");
+    setTimeout(() => { copyBtn.textContent = "복사"; copyBtn.classList.remove("done"); }, 1500);
+    return;
+  }
+
+  const act = e.target.closest("[data-act]");
+  if (act && isAdmin) {
+    const id = decodeURIComponent((location.hash.match(/^#\/item\/(.+)$/) || [])[1] || "");
+    if (act.dataset.act === "add") openEditor(null);
+    if (act.dataset.act === "edit") openEditor(items.find(x => x.id === id));
+    if (act.dataset.act === "delete") deleteItem(id);
+  }
+});
+
+document.getElementById("adminBtn").addEventListener("click", async () => {
+  if (isAdmin) {
+    isAdmin = false; token = ""; store.del("gh_token");
+    await loadData();
+    render();
+    toast("편집 모드를 껐어요");
+  } else {
+    openLogin();
+  }
+});
+
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
+
+/* ---------- 시작 ---------- */
+(async function init() {
+  repo = detectRepo();
+  const saved = store.get("gh_token");
+  if (saved && repo) {
+    token = saved;
+    try { await verifyToken(); isAdmin = true; }
+    catch { token = ""; store.del("gh_token"); }
+  }
+  try { await loadData(); }
+  catch { isAdmin = false; await loadData(); }
+  render();
+})();
+</script>
+</body>
+</html>
